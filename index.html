@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Euler Paths - Modified</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+                font-family: Verdana;
+                font-size: 80%;
+			}
+
+			a {
+				color:#0078ff;
+			}
+            
+            #scene {
+				background-color: lightblue ;
+				width: 100%;
+                height: 100%;
+                cursor: pointer;
+			}
+            
+            #calculate {
+				background-color: lightblue;
+                font-family: Verdana;
+                position: relative;
+                border:2px solid;
+                border-radius:25px;
+                height: 30px;
+                padding-left: 30%;
+                padding-top: 20px;
+                cursor: pointer;
+			}
+            #calculate:hover{
+                background-color: orange;
+            }
+            
+            
+            #leyend {
+				background-color: gray;
+                width: 20%;
+                height: 100%;
+                float: left;
+                position: absolute;
+                z-index: 2000;
+                overflow: auto;
+			}
+            
+            .solutions {
+                height: 100%;
+                float: left;
+                position: relative;
+                width:100%;
+			}
+            
+             .solution {
+                 border: 1px dotted black;
+                margin-top: 20px;
+                width: 100%;
+                height: 30px;
+                float: left;
+                position: relative;
+			}
+            
+            .node {
+                width: 20px;
+                height: 20px;
+                float:left;
+			}
+            
+            #solvable_type{
+                color:red;
+            }
+            
+            #animate {
+                font-size: 150%;
+			}
+		</style>
+        
+        
+        
+        <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+        <script src="js/three.min.js"></script>
+        <script src="js/graph.js"></script>
+        
+        <script src="js/n_hamiltonian.js"></script>
+        <script src="js/helvetiker_regular.typeface.js"></script>
+        
+	</head>
+	<body>
+            
+		<div id="leyend"> 
+            <div class="leyend_data">
+                <h2>Info</h2>
+                <ul>
+                    <li><div style="background-color:black;width:auto;display:inline;color:white">Black</div> Arrows has to be Tranversed 1 time</li>
+                    <li><div style="background-color:green;width:auto;display:inline;color:black">Green</div> Arrows has to be Tranversed 2 times</li>
+                    <li>Drag/Drop scene and Zoom with Up/Down, Translate with Left/Right</li>
+                    <li>Click on Euler blue button below to Start</li>
+                </ul>
+            </div>
+            <div id="animate"><input id="isAnimated" type="checkbox" checked="checked">animate</input></div><br/>
+            <div id="calculate">Euler Paths</div><br/>
+            <div class="solutions"></div>
+        </div>
+        <div id="scene">
+        </div>
+
+		<script>
+            
+            function degInRad(deg) {
+                return deg * Math.PI / 180;
+            }  
+            
+			var mouseX = 0, mouseY = 0,
+
+			windowHalfX = window.innerWidth / 2,
+			windowHalfY = window.innerHeight / 2,
+
+			SEPARATION = 100,
+			AMOUNTX = 10,
+			AMOUNTY = 10,
+
+			camera, scene, renderer;
+            var graph_;
+            
+            var group, text,text3d;
+            
+			init();
+			animate();
+
+			function init() {
+
+				var container, separation = 100, amountX = 50, amountY = 50,
+				particles, particle;
+
+				container = document.getElementById('scene');
+				
+				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1 );
+				camera.position.x= 0;
+                camera.position.y= 0;
+                camera.position.z = 700;
+                                
+				scene = new THREE.Scene();
+
+				renderer = new THREE.CanvasRenderer();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				var PI2 = Math.PI * 2;
+				var material = new THREE.SpriteCanvasMaterial( {
+					color: 0xffffff,
+					program: function ( context ) {
+						context.beginPath();
+						context.arc( 0, 0, 0.5, 0, PI2, true );
+						context.fill();
+					}
+				} );
+                
+                graph_ = new graph();
+                graph_.read();
+                graph_.paint(scene);
+                
+				window.addEventListener( 'resize', onWindowResize, false );
+                
+                graphics.scene = scene;
+			}
+
+			function onWindowResize() {
+
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+            }
+
+            $( "#calculate" ).click(function() {
+                $(".solutions").empty();
+                hamiltonian();
+            });
+            
+			//
+            var mouseX = 500;
+            var mouseY = 0;
+            var step = 18;
+            var rotationX = 18;
+            var rotationY = 18;
+            var radius=700;
+            var isMouseDown = false;
+            
+            $('#scene').mousedown(function( event ) {
+                    isMouseDown = true;
+            }).mouseup(function(){
+                    isMouseDown = false;
+            });
+            
+            $('#scene').mousemove(function( event ) {
+                if(isMouseDown){
+                    mouseX = event.clientX - windowHalfX;
+                    mouseY = event.clientY - windowHalfY;  
+
+                    camera.position.x += ( mouseX - camera.position.x ) * .05;
+                    camera.position.y += ( - mouseY + 200 - camera.position.y ) * .05;
+                }
+			});
+            
+            $(document).keydown(function(e){
+                if (e.keyCode == 37) { //Left
+                   rotationY -= 18;
+                }
+                if (e.keyCode == 39) { //Right 
+                   rotationY += 18;
+                }
+                if (e.keyCode == 38) { //Up
+                   //rotationX += 18;
+                    if(camera.position.z > 0)
+                        camera.position.z -= 10;
+                }
+                if (e.keyCode == 40) { //Down
+                   camera.position.z += 10;
+                }
+                
+                camera.position.x = Math.sin(utils.toRadians(rotationY))*radius;
+                //camera.position.z = Math.cos(utils.toRadians(rotationY))*radius;
+                camera.position.y = Math.sin(utils.toRadians(rotationX))*radius;
+            });
+            
+			//
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+			}
+
+			function render() {
+                camera.lookAt( scene.position );
+				renderer.render( scene, camera );
+			}
+            
+            function hamiltonian() {
+                //graphics.refreshScene();
+                algorithm.result_text = text;
+                algorithm.graph = graph_;
+                algorithm.clear();
+                //algorithm.dfs();
+                algorithm.euler();
+			}
+
+		</script>
+	</body>
+</html>
