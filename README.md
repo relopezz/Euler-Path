@@ -1,4 +1,4 @@
-euler_path
+Eulerian path
 ==========
 Use Chrome.
 
